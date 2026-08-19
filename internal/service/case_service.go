@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -140,8 +141,9 @@ func (s *ItemService) StartProcessing(ctx context.Context, id, actor string) (*d
 
 func (s *ItemService) Modify(ctx context.Context, id string, req ModifyItemRequest) (*domain.RightsCase, error) {
 	if err := domain.ValidateModificationActor(req.Actor); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("validate modification actor: %w", err)
 	}
+	req.Actor = strings.TrimSpace(req.Actor)
 	item, err := s.store.GetItem(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get item: %w", err)
