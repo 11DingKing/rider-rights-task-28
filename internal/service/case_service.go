@@ -142,6 +142,9 @@ func (s *ItemService) Modify(ctx context.Context, id string, req ModifyItemReque
 	if err := domain.ValidateModificationActor(req.Actor); err != nil {
 		return nil, err
 	}
+	// Persist the cleaned-up identity so the audit trail can attribute the
+	// modification to a real operator instead of surrounding whitespace.
+	actor := domain.NormalizeModificationActor(req.Actor)
 	item, err := s.store.GetItem(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get item: %w", err)
@@ -171,7 +174,7 @@ func (s *ItemService) Modify(ctx context.Context, id string, req ModifyItemReque
 		item.Keywords = req.Keywords
 	}
 	item.UpdatedAt = s.clock.Now()
-	if err := s.updateItemWithAudit(ctx, item, req.Actor, auditlog.ActionModify, ""); err != nil {
+	if err := s.updateItemWithAudit(ctx, item, actor, auditlog.ActionModify, ""); err != nil {
 		return nil, err
 	}
 	return item, nil
